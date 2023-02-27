@@ -67,7 +67,7 @@ int strncmp(const char *s1, const char *s2, size_t n) {
 void *memset(void *s, int c, size_t n) {
 	char *now =(char *)s;
 	while(n--){
-		*now=c;
+		*now=(char)c;
 		now++;
 	}
 	return s;
@@ -86,14 +86,14 @@ int memcmp(const void *s1, const void *s2, size_t n) {
 	char *c1=(char *)s1;
 	char *c2=(char *)s2;
 	while(n--){
-		if(*s1!=*s2){
-			return *s1-*s2;
+		if(*c1!=*c2){
+			return *c1-*c2;
 		}
-		if(*s1==0){
+		if(*c1==0){
 			break;
 		}
-		s1++;
-		s2++;
+		c1++;
+		c2++;
 	}
 	return 0;
 }
