@@ -40,7 +40,7 @@ char *strcat(char *dst, const char *src) {
 }
 
 int strcmp(const char *s1, const char *s2) {
-	while(*s1&&*s2){
+	while(*s1||*s2){
 		if(*s1!=*s2){
 			return *s1-*s2;
 		}
