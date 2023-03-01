@@ -1,2 +1,2 @@
 #!/bin/bash
-sed -i "s/$1/$2/g" $3
+sed -i "s/$2/$3/g" $1
