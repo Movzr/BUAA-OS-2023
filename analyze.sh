@@ -16,7 +16,7 @@ else
     ;;
     "--diff")
     diff -s  $1 $3 1> /dev/null
-    a=1
+    a=0
 	if [ $a -eq 0 ]
         then
 		echo same
