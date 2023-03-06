@@ -1,6 +1,6 @@
 #!/bin/bash
 mkdir mydir
-chmod +rwx mydir
+chmod a +rwx mydir
 touch myfile
 echo 2023 > myfile
 mv moveme mydir
