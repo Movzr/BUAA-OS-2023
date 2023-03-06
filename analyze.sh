@@ -15,13 +15,14 @@ else
     grep $3 $1 > $3.txt 
     ;;
     "--diff")
-    	diff -s  $1 $3
-	#if [ $a -eq 0 ]
-	#then
-	#	echo same
-	#else
-	#	echo different
-	#fi
+    diff -s  $1 $3 1> /dev/null
+    a=1
+	if [ $a -eq 0 ]
+        then
+		echo same
+	else
+		echo different
+	fi
     ;;
     esac
 fi
