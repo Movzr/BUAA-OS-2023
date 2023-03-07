@@ -15,9 +15,7 @@ else
     grep $3 $1 > $3.txt 
     ;;
     "--diff")
-    diff -s  $1 $3 1> /dev/null
-    a=0
-	if [ $a -eq 0 ]
+	if [ diff $1 $3 ]
         then
 		echo same
 	else
