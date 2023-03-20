@@ -104,6 +104,7 @@ int strcmp(const char *p, const char *q) {
 void outputs(void *data, const char *buf, size_t len) {
 	for (int i = 0; i < len; i++) {
 		printcharc(buf[i]);
+		data+=len;
 	}
 }
 
