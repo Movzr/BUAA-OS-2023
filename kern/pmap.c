@@ -25,7 +25,7 @@ void mips_detect_memory() {
 
 	/* Step 2: Calculate the corresponding 'npage' value. */
 	/* Exercise 2.1: Your code here. */
-
+	npage = memsize / 4096;
 	printk("Memory size: %lu KiB, number of pages: %lu\n", memsize / 1024, npage);
 }
 
@@ -90,13 +90,13 @@ void page_init(void) {
 	/* Step 1: Initialize page_free_list. */
 	/* Hint: Use macro `LIST_INIT` defined in include/queue.h. */
 	/* Exercise 2.3: Your code here. (1/4) */
-
+	LIST_INIT(page_free_list);
 	/* Step 2: Align `freemem` up to multiple of BY2PG. */
 	/* Exercise 2.3: Your code here. (2/4) */
-
+	freemem = ROUND(freemem, BY2PG);
 	/* Step 3: Mark all memory below `freemem` as used (set `pp_ref` to 1) */
 	/* Exercise 2.3: Your code here. (3/4) */
-
+	
 	/* Step 4: Mark the other memory as free. */
 	/* Exercise 2.3: Your code here. (4/4) */
 
