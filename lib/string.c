@@ -113,7 +113,6 @@ int sprintf(char *buf, const char *fmt, ...){
 	va_list ap;
 	va_start(ap,fmt);
 	vprintfmt(outputs,buf,fmt,ap);
-	buf+=strlen(fmt);
 	finallength+=strlen(fmt);
 	va_end(ap);
 	return finallength;
