@@ -102,11 +102,15 @@ int strcmp(const char *p, const char *q) {
 }
 
 void outputs(void *data, const char *buf, size_t len) {
-	for (int i = 0; i < len; i++) {
-		printcharc(buf[i]);
-		data+=len;
+	char* p =(char *)data;
+        for (int i = 0; i < len; i++) {
+		*p=buf[i];
+		p++;
 	}
+	data+=len;
 }
+
+
 
 
 int sprintf(char *buf, const char *fmt, ...){
@@ -114,7 +118,7 @@ int sprintf(char *buf, const char *fmt, ...){
 	va_list ap;
 	va_start(ap,fmt);
 	vprintfmt(outputs,buf,fmt,ap);
-	finallength+=strlen(fmt);
+	finallength+=strlen(buf);
 	va_end(ap);
 	return finallength;
 }
