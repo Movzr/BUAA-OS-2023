@@ -90,16 +90,22 @@ void page_init(void) {
 	/* Step 1: Initialize page_free_list. */
 	/* Hint: Use macro `LIST_INIT` defined in include/queue.h. */
 	/* Exercise 2.3: Your code here. (1/4) */
-	LIST_INIT(page_free_list);
+	LIST_INIT(&page_free_list);
 	/* Step 2: Align `freemem` up to multiple of BY2PG. */
 	/* Exercise 2.3: Your code here. (2/4) */
 	freemem = ROUND(freemem, BY2PG);
 	/* Step 3: Mark all memory below `freemem` as used (set `pp_ref` to 1) */
 	/* Exercise 2.3: Your code here. (3/4) */
-	
+	int usedpages=(PADDR(freemem)/BY2PG);
+	for(int i=0;i<usedpages;i++){
+		(pages+i)->pp_ref=1;
+	}
 	/* Step 4: Mark the other memory as free. */
 	/* Exercise 2.3: Your code here. (4/4) */
-
+	for(int i=usedpages;i<npage;i++){
+		(pages+i)->pp_ref=0;
+		LIST_INSERT_HEAD(&page_free_list,pages+i,pp_link);
+	}
 }
 
 /* Overview:
@@ -119,13 +125,15 @@ int page_alloc(struct Page **new) {
 	/* Step 1: Get a page from free memory. If fails, return the error code.*/
 	struct Page *pp;
 	/* Exercise 2.4: Your code here. (1/2) */
-
+	if(LIST_EMPTY(&page_free_list)){
+		return -E_NO_MEM;
+	}
+	pp=LIST_FIRST(&page_free_list);
 	LIST_REMOVE(pp, pp_link);
-
 	/* Step 2: Initialize this page with zero.
 	 * Hint: use `memset`. */
 	/* Exercise 2.4: Your code here. (2/2) */
-
+	memset(page2kva(pp),0,BY2PG);
 	*new = pp;
 	return 0;
 }
@@ -140,7 +148,7 @@ void page_free(struct Page *pp) {
 	assert(pp->pp_ref == 0);
 	/* Just insert it into 'page_free_list'. */
 	/* Exercise 2.5: Your code here. */
-
+	LIST_INSERT_HEAD(&page_free_list,pp,pp_link);
 }
 
 /* Overview:
@@ -162,19 +170,30 @@ void page_free(struct Page *pp) {
 static int pgdir_walk(Pde *pgdir, u_long va, int create, Pte **ppte) {
 	Pde *pgdir_entryp;
 	struct Page *pp;
-
+	int allocres;
 	/* Step 1: Get the corresponding page directory entry. */
 	/* Exercise 2.6: Your code here. (1/3) */
-
+	pgdir_entryp=pgdir+PDX(va);
 	/* Step 2: If the corresponding page table is not existent (valid) and parameter `create`
 	 * is set, create one. Set the permission bits 'PTE_D | PTE_V' for this new page in the
 	 * page directory.
 	 * If failed to allocate a new page (out of memory), return the error. */
 	/* Exercise 2.6: Your code here. (2/3) */
-
+	if(((*pgdir_entryp)&PTE_V)==0){
+		if(create){
+			if((allocres=page_alloc(&pp))<0){												//alloc's result is no_mem_error
+				return allocres;
+			}
+			*pgdir_entryp=page2pa(pp)|PTE_D|PTE_V;											//get pp-> page's PA and set pte_D and pte_V , this page is a new page_table
+			(pp->pp_ref)++;																	//this space of page has been used
+		}else{
+			*ppte=NULL;
+			return 0;
+		}
+	}
 	/* Step 3: Assign the kernel virtual address of the page table entry to '*ppte'. */
 	/* Exercise 2.6: Your code here. (3/3) */
-
+    *ppte=(Pte*)(KADDR(PTE_ADDR(*pgdir_entryp)))+PTX(va);									//get pagenum and translate it to PA, then translate to VA and add offset to get the address of PTE
 	return 0;
 }
 
@@ -192,7 +211,7 @@ static int pgdir_walk(Pde *pgdir, u_long va, int create, Pte **ppte) {
  */
 int page_insert(Pde *pgdir, u_int asid, struct Page *pp, u_long va, u_int perm) {
 	Pte *pte;
-
+	int pgdirwalkres;
 	/* Step 1: Get corresponding page table entry. */
 	pgdir_walk(pgdir, va, 0, &pte);
 
@@ -208,15 +227,18 @@ int page_insert(Pde *pgdir, u_int asid, struct Page *pp, u_long va, u_int perm) 
 
 	/* Step 2: Flush TLB with 'tlb_invalidate'. */
 	/* Exercise 2.7: Your code here. (1/3) */
-
+	tlb_invalidate(asid, va);
 	/* Step 3: Re-get or create the page table entry. */
 	/* If failed to create, return the error. */
 	/* Exercise 2.7: Your code here. (2/3) */
-
+	if((pgdirwalkres=pgdir_walk(pgdir, va, 1, &pte))<0){
+		return pgdirwalkres;
+	}
 	/* Step 4: Insert the page to the page table entry with 'perm | PTE_V' and increase its
 	 * 'pp_ref'. */
 	/* Exercise 2.7: Your code here. (3/3) */
-
+	*pte = page2pa(pp)|perm|PTE_V;
+	(pp->pp_ref)++;
 	return 0;
 }
 
