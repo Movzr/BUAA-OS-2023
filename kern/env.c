@@ -192,7 +192,7 @@ static int env_setup_vm(struct Env *e) {
 	struct Page *p;
 	try(page_alloc(&p));
 	/* Exercise 3.3: Your code here. */
-	p->pp_ref++;
+	(p->pp_ref)++;
 	e->env_pgdir=(Pde *)page2kva(p);
 	/* Step 2: Copy the template page directory 'base_pgdir' to 'e->env_pgdir'. */
 	/* Hint:
@@ -299,7 +299,7 @@ static int load_icode_mapper(void *data, u_long va, size_t offset, u_int perm, c
 	// Hint: You may want to use 'memcpy'.
 	if (src != NULL) {
 		/* Exercise 3.5: Your code here. (2/2) */
-		memcpy((void *)(page2kva(p)+offset),src,len);
+		memcpy((void *)page2kva(p)+offset,src,len);
 	}
 
 	/* Step 3: Insert 'p' into 'env->env_pgdir' at 'va' with 'perm'. */
@@ -358,6 +358,7 @@ struct Env *env_create(const void *binary, size_t size, int priority) {
 	 * 'env_sched_list' using 'TAILQ_INSERT_HEAD'. */
 	/* Exercise 3.7: Your code here. (3/3) */
 	load_icode(e,binary,size);
+	TAILQ_INSERT_HEAD(&env_sched_list,e,env_sched_link);
 	return e;
 }
 
