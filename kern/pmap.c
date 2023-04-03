@@ -313,6 +313,32 @@ void tlb_invalidate(u_int asid, u_long va) {
 	tlb_out(PTE_ADDR(va) | (asid << 6));
 }
 
+u_int page_perm_stat(Pde *pgdir, struct Page *pp, u_int perm_mask){
+	u_int cnt=0;
+	u_long tarpa=page2pa(pp);
+	u_int perm;
+	Pde *pgdir_entry;
+	Pte *pte;
+	for(int i=0;i<1024;i++){
+	  pgdir_entry=pgdir+i;
+	  if(((*pgdir_entry)&PTE_V)!=0){
+	    for(int j=0;j<1024;j++){
+		pte=(Pte*)(KADDR(PTE_ADDR(*pgdir_entry)))+j;
+		    if(((*pte)&PTE_V)!=0){
+			if(PTE_ADDR(*pte)==tarpa){
+				perm=(u_int)(((*pte)<<20)>>20);
+				if((perm&perm_mask)==perm_mask)
+				{
+					cnt++;
+				}
+			}
+		    }
+	    }
+	  }
+	}
+	return cnt;	
+}
+
 void physical_memory_manage_check(void) {
 	struct Page *pp, *pp0, *pp1, *pp2;
 	struct Page_list fl;
