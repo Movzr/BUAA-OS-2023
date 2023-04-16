@@ -118,7 +118,12 @@ int envid2env(u_int envid, struct Env **penv, int checkperm) {
 	 *   You may want to use 'ENVX'.
 	 */
 	/* Exercise 4.3: Your code here. (1/2) */
-
+	if(envid==0){
+		e=curenv;
+		
+	}else{
+		e=&envs[ENVX(envid)];
+	}
 	if (e->env_status == ENV_FREE || e->env_id != envid) {
 		return -E_BAD_ENV;
 	}
@@ -130,7 +135,12 @@ int envid2env(u_int envid, struct Env **penv, int checkperm) {
 	 *   If violated, return '-E_BAD_ENV'.
 	 */
 	/* Exercise 4.3: Your code here. (2/2) */
-
+	if(checkperm){
+		if((e!=curenv)&&(e->env_parent_id!=curenv->env_id)){
+			*penv = NULL;
+			return -E_BAD_ENV;
+		}
+	}
 	/* Step 3: Assign 'e' to '*penv'. */
 	*penv = e;
 	return 0;
@@ -240,7 +250,7 @@ int env_alloc(struct Env **new, u_int parent_id) {
 	e=LIST_FIRST(&env_free_list);
 	/* Step 2: Call a 'env_setup_vm' to initialize the user address space for this new Env. */
 	/* Exercise 3.4: Your code here. (2/4) */
-	env_setup_vm(e);
+	try(env_setup_vm(e));
 	/* Step 3: Initialize these fields for the new Env with appropriate values:
 	 *   'env_user_tlb_mod_entry' (lab4), 'env_runs' (lab6), 'env_id' (lab3), 'env_asid' (lab3),
 	 *   'env_parent_id' (lab3)
