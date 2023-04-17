@@ -35,7 +35,7 @@ void do_ov(struct Trapframe *tf) {
 	u_long pa;
  	pa=va2pa(curenv->env_pgdir,tf->cp0_epc);
 	va=KADDR(pa);
-	va+=tf->cp0_epc&0xfff;
+	va+=tf->cp0_epc & 0xfff;
 	u_long instr=*((u_int *)va);
 	if(((instr&0x20)==0x20)&&((instr>>26)==0)){
 		*((u_long *)va)=instr+1;
