@@ -33,12 +33,10 @@ void do_reserved(struct Trapframe *tf) {
 void do_ov(struct Trapframe *tf) {
 	u_long va;
 	u_long pa;
- 	Pte *pte;
-	page_lookup(curenv->env_pgdir,tf->cp0_epc,&pte);
-	pa=PTE_ADDR(*pte);
+ 	pa=va2pa(curenv->env_pgdir,tf->cp0_epc);
 	va=KADDR(pa);
+	va+=tf->cp0_epc&0xfff;
 	u_long instr=*((u_int *)va);
-	printk("0x%08x\n",instr);
 	if(((instr&0x20)==0x20)&&((instr>>26)==0)){
 		*((u_long *)va)=instr+1;
 		curenv->env_ov_cnt++;
