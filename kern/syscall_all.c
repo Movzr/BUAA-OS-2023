@@ -96,10 +96,10 @@ int sys_set_tlb_mod_entry(u_int envid, u_int func) {
 
 	/* Step 1: Convert the envid to its corresponding 'struct Env *' using 'envid2env'. */
 	/* Exercise 4.12: Your code here. (1/2) */
-
+	try(envid2env(envid,&env,1));
 	/* Step 2: Set its 'env_user_tlb_mod_entry' to 'func'. */
 	/* Exercise 4.12: Your code here. (2/2) */
-
+	env->env_user_tlb_mod_entry=func;
 	return 0;
 }
 
@@ -241,10 +241,11 @@ int sys_exofork(void) {
 
 	/* Step 1: Allocate a new env using 'env_alloc'. */
 	/* Exercise 4.9: Your code here. (1/4) */
-	try(env_alloc(&e, 0));
+	try(env_alloc(&e, curenv->env_id));
 	/* Step 2: Copy the current Trapframe below 'KSTACKTOP' to the new env's 'env_tf'. */
 	/* Exercise 4.9: Your code here. (2/4) */
-	e->env_tf=(struct Trapframe *)KSTACKTOP - 1;
+	e->env_tf=*((struct Trapframe *)KSTACKTOP - 1);
+	//memcpy((void *)&(e->env_tf),(void *)KSTACKTOP-sizeof(struct Trapframe),sizeof(struct Trapframe));
 	/* Step 3: Set the new env's 'env_tf.regs[2]' to 0 to indicate the return value in child. */
 	/* Exercise 4.9: Your code here. (3/4) */
 	e->env_tf.regs[2]=0;
@@ -272,13 +273,23 @@ int sys_set_env_status(u_int envid, u_int status) {
 
 	/* Step 1: Check if 'status' is valid. */
 	/* Exercise 4.14: Your code here. (1/3) */
-
+	if(status!=ENV_RUNNABLE&&status!=ENV_NOT_RUNNABLE){
+		return -E_INVAL;
+	}
 	/* Step 2: Convert the envid to its corresponding 'struct Env *' using 'envid2env'. */
 	/* Exercise 4.14: Your code here. (2/3) */
-
+	try(envid2env(envid,&env,1));
 	/* Step 3: Update 'env_sched_list' if the 'env_status' of 'env' is being changed. */
 	/* Exercise 4.14: Your code here. (3/3) */
-
+	
+	if(env->env_status!=status){
+		if(status==ENV_RUNNABLE){
+			TAILQ_INSERT_TAIL(&env_sched_list,env,env_sched_link);
+		}
+		else{
+			TAILQ_REMOVE(&env_sched_list,env,env_sched_link);
+		}
+	}
 	/* Step 4: Set the 'env_status' of 'env'. */
 	env->env_status = status;
 	return 0;
