@@ -478,6 +478,51 @@ int sys_read_dev(u_int va, u_int pa, u_int len) {
 	return 0;
 }
 
+int sys_ipc_try_broadcast(u_int faid, u_int val, void * srcva, u_int perm){
+	struct Env *e;
+	struct Page *p;
+	u_int realfa;
+	if(faid==0) {
+		realfa=curenv->env_id;
+	}else{
+		realfa=faid;
+	}
+	for(u_int i=0;i<NENV;i++){
+		e=&envs[i];
+		if(e->env_status!=ENV_FREE&&e->env_parent_id==realfa){
+			struct Page *p;
+			if (srcva != 0 && is_illegal_va(srcva)) {
+				return -E_INVAL;
+			}
+			if(e->env_ipc_recving==0){
+				return -E_IPC_NOT_RECV;
+			}
+	/* Step 4: Set the target's ipc fields. */
+			e->env_ipc_value = value;
+			e->env_ipc_from = realfa;
+			e->env_ipc_perm = PTE_V | perm;
+			e->env_ipc_recving = 0;
+			e->env_status=ENV_RUNNABLE;
+			TAILQ_INSERT_TAIL(&env_sched_list,e,env_sched_link);
+	/* Step 6: If 'srcva' is not zero, map the page at 'srcva' in 'curenv' to 'e->env_ipc_dstva'
+	 * in 'e'. */
+	/* Return -E_INVAL if 'srcva' is not zero and not mapped in 'curenv'. */
+			if (srcva != 0) {
+		/* Exercise 4.8: Your code here. (8/8) */
+				struct Env *env_fa;
+				envid2env(realfa,&env_fa,0);
+				if((p=page_lookup(env_fa->env_pgdir,srcva,NULL))==NULL){
+					return -E_INVAL;
+				}
+				try(page_insert(e->env_pgdir, e->env_asid, p, e->env_ipc_dstva, e->env_ipc_perm));
+				}
+	
+			sys_ipc_try_broadcast(e->envid, val, srcva, perm);
+		}
+	}
+
+}
+
 void *syscall_table[MAX_SYSNO] = {
     [SYS_putchar] = sys_putchar,
     [SYS_print_cons] = sys_print_cons,
@@ -497,6 +542,7 @@ void *syscall_table[MAX_SYSNO] = {
     [SYS_cgetc] = sys_cgetc,
     [SYS_write_dev] = sys_write_dev,
     [SYS_read_dev] = sys_read_dev,
+    [SYS_ipc_try_broadcast] = sys_ipc_try_broadcast,
 };
 
 /* Overview:

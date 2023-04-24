@@ -9,6 +9,11 @@
 // -E_IPC_NOT_RECV.
 //
 // Hint: use syscall_yield() to be CPU-friendly.
+
+void ipc_broadcast(u_int val, void * srcva, u_int perm) {
+	syscall_ipc_try_broadcast(0,val,srcva,perm);
+}
+
 void ipc_send(u_int whom, u_int val, const void *srcva, u_int perm) {
 	int r;
 	while ((r = syscall_ipc_try_send(whom, val, srcva, perm)) == -E_IPC_NOT_RECV) {

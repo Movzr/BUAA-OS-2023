@@ -4,6 +4,10 @@
 #include <syscall.h>
 #include <trap.h>
 
+int syscall_ipc_try_broadcast(u_int faid, u_int val, void * srcva, u_int perm) {
+	return msyscall(SYS_ipc_try_broadcast,faid, val, srcva, perm);
+}
+
 void syscall_putchar(int ch) {
 	msyscall(SYS_putchar, ch);
 }
