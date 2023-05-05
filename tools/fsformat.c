@@ -109,15 +109,15 @@ void init_disk() {
 	disk[0].type = BLOCK_BOOT;
 
 	// Step 2: Initialize boundary.
-	nbitblock = (NBLOCK + BIT2BLK - 1) / BIT2BLK;
-	nextbno = 2 + nbitblock;
+	nbitblock = (NBLOCK + BIT2BLK - 1) / BIT2BLK;		//ROUNDUP of (NBLOCK/BIT2BLK)
+	nextbno = 2 + nbitblock;  
 
 	// Step 2: Initialize bitmap blocks.
 	for (i = 0; i < nbitblock; ++i) {
-		disk[2 + i].type = BLOCK_BMAP;
+		disk[2 + i].type = BLOCK_BMAP;					//mark blocks which contain BMAP
 	}
 	for (i = 0; i < nbitblock; ++i) {
-		memset(disk[2 + i].data, 0xff, BY2BLK);
+		memset(disk[2 + i].data, 0xff, BY2BLK);			//mark All BMAP as available
 	}
 	if (NBLOCK != nbitblock * BIT2BLK) {
 		diff = NBLOCK % BIT2BLK / 8;
@@ -214,7 +214,11 @@ struct File *create_file(struct File *dirf) {
 		// directly from 'f_direct'. Otherwise, access the indirect block on 'disk' and get
 		// the 'bno' at the index.
 		/* Exercise 5.5: Your code here. (1/3) */
-
+		if(i < NDIRECT){
+			bno = dirf->f_direct[i];
+		} else {
+			bno = ((uint32_t*)disk[dirf->f_indirect].data)[i];
+		}
 		// Get the directory block using the block number.
 		struct File *blk = (struct File *)(disk[bno].data);
 
@@ -223,14 +227,14 @@ struct File *create_file(struct File *dirf) {
 			// If the first byte of the file name is null, the 'File' is unused.
 			// Return a pointer to the unused 'File'.
 			/* Exercise 5.5: Your code here. (2/3) */
-
+			if(f->f_name[0]==NULL) return f;
 		}
 	}
 
 	// Step 2: If no unused file is found, allocate a new block using 'make_link_block' function
 	// and return a pointer to the new block on 'disk'.
 	/* Exercise 5.5: Your code here. (3/3) */
-
+	return (struct File *)disk[make_link_block(dirf,nblk)].data;
 	return NULL;
 }
 
