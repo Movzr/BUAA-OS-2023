@@ -8,6 +8,19 @@
 #include <syscall.h>
 #include <trap.h>
 
+int sem_init(const char *name, int init_value, int checkperm);
+int sem_wait(int sem_id);
+int sem_post(int sem_id);
+int sem_getvalue(int sem_id);
+int sem_getid(const char *name);
+
+int syscall_sem_init(const char * name, int init_value, int checkperm);
+int syscall_sem_post(int sem_id);
+int syscall_int sem_post(int sem_id);
+int syscall_sem_getvalue(int sem_id);
+int syscall_int sem_getid(const char *name);
+
+
 #define vpt ((volatile Pte *)UVPT)
 #define vpd ((volatile Pde *)(UVPT + (PDX(UVPT) << PGSHIFT)))
 #define envs ((volatile struct Env *)UENVS)

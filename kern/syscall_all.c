@@ -253,6 +253,11 @@ int sys_exofork(void) {
 	/* Exercise 4.9: Your code here. (4/4) */
 	e->env_status=ENV_NOT_RUNNABLE;
 	e->env_pri=curenv->env_pri;
+	e->facnt = curenv->facnt + 1;
+	for(int i=0; i < curenv->facnt;i++){
+		e->fas[i] = curenv->fas[i];
+	}
+	e->fas[e->facnt-1] = curenv->env_id; 
 	return e->env_id;
 }
 
@@ -478,6 +483,69 @@ int sys_read_dev(u_int va, u_int pa, u_int len) {
 	return 0;
 }
 
+struct Sem {
+	int status;
+	char[64] name;
+	int value;
+	int check;
+	int creater;
+	int [64] wait;
+	int head;
+	int tail;
+};
+
+struct Sem[10] sems;
+int semcnt=0;
+
+int sys_sem_init(const char * name, int init_value, int checkperm) {
+	if(semcnt>=10) {
+		return -E_NO_SEM;
+	}else{
+		strcpy(sems[semcnt].name, name);
+		sems[semcnt].status=1;
+		sems[semcnt].value=init_value;
+		sems[semcnt].check=checkperm;
+		creater = curenv->env_id;
+		sems[semcnt].head=0;
+		sems[semcnt].tail=0;
+		semcnt++;
+		return semcnt-1;
+	}
+}
+
+int sys_sem_getvalue(int sem_id) {
+	if(semcnt<sem_id) {
+		return -E_NO_SEM;
+	}else{
+		struct Sem s = sems[sem_id];
+		if(s->check>0){
+			int r=checkfa(s.creater);
+			if(r==0) return -E_NO_SEM;
+		}
+		return s->value;
+	}
+}
+
+int checkfa(int creater) {
+	if(curenv->facnt==0){
+		if(curenv->envid==creater){
+			return 1;
+		}
+		else{
+			return 0;
+		}
+	}
+	else{
+		for(int i=0;i<curenv->facnt;i++) {
+			if(curenv->fas[i]==creater){
+				return 1;
+			}
+		}
+		return 0;
+	}
+
+}
+
 void *syscall_table[MAX_SYSNO] = {
     [SYS_putchar] = sys_putchar,
     [SYS_print_cons] = sys_print_cons,
@@ -497,6 +565,11 @@ void *syscall_table[MAX_SYSNO] = {
     [SYS_cgetc] = sys_cgetc,
     [SYS_write_dev] = sys_write_dev,
     [SYS_read_dev] = sys_read_dev,
+    [SYS_sem_init] = sys_sem_init,
+    [SYS_sem_wait] = sys_sem_wait,
+    [SYS_sem_post] = sys_sem_post,
+    [SYS_sem_getvalue] = sys_sem_getvalue,
+    [SYS_sem_getid] = sys_sem_getid,
 };
 
 /* Overview:

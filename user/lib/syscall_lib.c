@@ -4,6 +4,26 @@
 #include <syscall.h>
 #include <trap.h>
 
+int syscall_sem_init(const char *name, int init_value, int checkperm) {
+	return msyscall(SYS_sem_init, name, init_value, checkperm);
+}
+
+int syscall_sem_wait(int sem_id) {
+	return msyscall(SYS_sem_wait, sem_id);
+}
+
+int syscall_sem_post(int sem_id) {
+	return msyscall(SYS_sem_post, sem_id);
+}
+
+int syscall_sem_getvalue(int sem_id) {
+	return msyscall(SYS_sem_getvalue, sem_id);
+}
+
+int syscall_sem_getid(const char *name) {
+	return msyscall(SYS_sem_getid, name);
+}
+
 void syscall_putchar(int ch) {
 	msyscall(SYS_putchar, ch);
 }

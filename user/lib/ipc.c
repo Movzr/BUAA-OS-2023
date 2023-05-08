@@ -37,3 +37,18 @@ u_int ipc_recv(u_int *whom, void *dstva, u_int *perm) {
 
 	return env->env_ipc_value;
 }
+
+int sem_init(const char * name, int init_value, int checkperm){
+	int r = syscall_sem_init(name,init_value,checkperm);
+	return r;
+}
+
+int sem_getvalue(int sem_id) {
+	int r= syscall_sem_getvalue(sem_id);
+	return r;
+}
+
+int sem_getid(const char *name){
+	int r = syscall_sem_getid(name);
+	return r;
+}
