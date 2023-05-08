@@ -509,6 +509,7 @@ void sys_barrier_wait(void){
 				env->env_status = ENV_RUNNABLE;
 				TAILQ_INSERT_TAIL(&env_sched_list,env,env_sched_link);
 			}
+			barrier.status=0;
 		}
 		schedule(1);
 	}
