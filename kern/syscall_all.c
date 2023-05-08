@@ -478,6 +478,42 @@ int sys_read_dev(u_int va, u_int pa, u_int len) {
 	return 0;
 }
 
+struct Barrier {
+	int limit;
+	int now;
+	int mark[100];
+	int status;
+};
+
+struct Barrier barrier;
+
+void sys_barrier_alloc(int n){
+	barrier.limit=n;
+	barrier.now=0;
+	barrier.status=1;
+}
+
+void sys_barrier_wait(void){
+	if(barrier.status==0) {
+		return;
+	}
+	else{
+		barrier.mark[barrier.now]=curenv->env_id;
+		barrier.now++;
+		curenv->env_status = ENV_NOT_RUNNABLE;
+		TAILQ_REMOVE(&env_sched_list,curenv,env_sched_link);
+		if(barrier.now==barrier.limit){
+			for(int i=0;i<barrier.limit;i++){
+				struct Env *env;
+				try(envid2env(barrier.mark[i],&env,0));
+				env->env_status = ENV_RUNNABLE;
+				TAILQ_INSERT_TAIL(&env_sched_list,env,env_sched_link);
+			}
+		}
+		schedule(1);
+	}
+}
+
 void *syscall_table[MAX_SYSNO] = {
     [SYS_putchar] = sys_putchar,
     [SYS_print_cons] = sys_print_cons,
@@ -497,6 +533,8 @@ void *syscall_table[MAX_SYSNO] = {
     [SYS_cgetc] = sys_cgetc,
     [SYS_write_dev] = sys_write_dev,
     [SYS_read_dev] = sys_read_dev,
+    [SYS_barrier_alloc] = sys_barrier_alloc,
+    [SYS_barrier_wait] = sys_barrier_wait,
 };
 
 /* Overview:

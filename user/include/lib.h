@@ -13,6 +13,9 @@
 #define envs ((volatile struct Env *)UENVS)
 #define pages ((volatile struct Page *)UPAGES)
 
+void syscall_barrier_alloc(int n);
+void syscall_barrier_wait(void);
+
 // libos
 void exit(void) __attribute__((noreturn));
 
