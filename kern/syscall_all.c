@@ -522,8 +522,17 @@ int sys_sem_getvalue(int sem_id) {
 			int r=checkfa(s.creater);
 			if(r==0) return -E_NO_SEM;
 		}
-		return s->value;
+		return s.value;
 	}
+}
+
+int sys_sem_getid(const char *name) {
+	for(int i=0;i<semcnt;i++){
+		if(strcmp(sems[i].name,name)==0&&checkfa(sems[i].creater)==1){
+			return i;
+		}
+	}
+	return -E_NO_SEM;
 }
 
 int checkfa(int creater) {
