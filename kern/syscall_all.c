@@ -513,6 +513,17 @@ int sys_sem_init(const char * name, int init_value, int checkperm) {
 	}
 }
 
+int sys_sem_wait(int sem_id){
+	if(semcnt<sem_id) {
+		return -E_NO_SEM;
+	}
+	else{
+		struct Sem s = sems[sem_id];
+
+
+	}
+}
+
 int sys_sem_getvalue(int sem_id) {
 	if(semcnt<sem_id) {
 		return -E_NO_SEM;
