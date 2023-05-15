@@ -46,7 +46,7 @@ int alloc_pblock(){
 			}
 		}
 		excel[logic]=target;
-		ide_write(0,t,(void *)&allZero,1);
+		ide_write(0,t,(void *)allZero,1);
 		map[t]=0;
 		flush[t]+=1;
 		return t;
@@ -95,7 +95,7 @@ void ssd_erase(u_int logic_no) {
 	if(r<0) {
 		return ;
 	}
-	ide_write(0,r,(void *)&allZero,1);
+	ide_write(0,r,(void *)allZero,1);
 	map[r]=0;
 	flush[r]+=1;
 	excel[logic_no]=-1;
