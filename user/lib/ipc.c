@@ -57,8 +57,8 @@ void usleep(u_int us) {
 		u_int nowS;
 		u_int nowUs;
 		nowS = get_time(&nowUs);
-		long long result= (long long)us + (long long)inS * (long long) 1000 + (long long) inUs;
-		long long check = (long long) nowS * (long long) 1000+ (long long) nowUs;
+		long long result= (long long)us + (long long)inS * (long long) 1000000 + (long long) inUs;
+		long long check = (long long) nowS * (long long) 1000000+ (long long) nowUs;
 		if(check >= result){
 			return ;
 		}else{
