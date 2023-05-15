@@ -2,6 +2,12 @@
 #include <lib.h>
 #include <mmu.h>
 
+
+void ssd_init();
+int ssd_read(u_int logic_no, void *dst);
+void ssd_write(u_int logic_no, void *src);
+void ssd_erase(u_int logic_no);
+
 #define PTE_DIRTY 0x0002 // file system block cache is dirty
 
 /* IDE disk number to look on for our file system */
