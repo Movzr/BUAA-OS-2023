@@ -8,6 +8,9 @@
 #include <syscall.h>
 #include <trap.h>
 
+u_int get_time(u_int *us);
+void usleep(u_int us);
+
 #define vpt ((volatile Pte *)UVPT)
 #define vpd ((volatile Pde *)(UVPT + (PDX(UVPT) << PGSHIFT)))
 #define envs ((volatile struct Env *)UENVS)
