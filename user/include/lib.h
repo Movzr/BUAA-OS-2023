@@ -13,6 +13,9 @@
 #define envs ((volatile struct Env *)UENVS)
 #define pages ((volatile struct Page *)UPAGES)
 
+int openat(int dirfd, const char *path, int mode);
+int fsipc_openat(u_int, const char *, u_int, struct Fd *);
+
 // libos
 void exit(void) __attribute__((noreturn));
 
