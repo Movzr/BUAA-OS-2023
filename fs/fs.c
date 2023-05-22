@@ -631,6 +631,9 @@ int walk_path(char *path, struct File **pdir, struct File **pfile, char *lastele
 
 			return r;
 		}
+		while(file->f_type== FTYPE_LNK) {
+			file_open(file->f_name, &file);
+		}
 	}
 
 	if (pdir) {

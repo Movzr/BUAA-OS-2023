@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+
+#define FTYPE_LNK 2
 // File nodes (both in-memory and on-disk)
 
 // Bytes per file system block - same as page size
