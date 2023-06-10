@@ -144,6 +144,30 @@ int parsecmd(char **argv, int *rightpipe) {
 			//user_panic("| not implemented");
 
 			break;
+		case ';':
+			*rightpipe = fork();
+			if(*rightpipe < 0){
+				user_panic("fork error in sh.c");
+			}
+			if(*rightpipe == 0) {
+				return argc;
+			}else {
+				wait(*rightpipe);
+				return parsecmd(argv, rightpipe);
+			}
+			break;
+
+		case '&':
+			*rightpipe = fork();
+			if(*rightpipe < 0){
+				user_panic("fork error in sh.c");
+			}
+			if(*rightpipe == 0) {
+				return argc;
+			}else {
+				return parsecmd(argv, rightpipe);
+			}
+			break;
 		}
 	}
 

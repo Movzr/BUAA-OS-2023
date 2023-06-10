@@ -142,7 +142,7 @@ int spawn(char *prog, char **argv) {
 	/* Exercise 6.4: Your code here. (3/6) */
 	r = init_stack(child, argv, &sp);
 	if(r < 0){
-		goto err;
+		goto err1;
 	}
 	// Step 5: Load the ELF segments in the file into the child's memory.
 	// This is similar to 'load_icode()' in the kernel.
