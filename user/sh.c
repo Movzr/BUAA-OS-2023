@@ -41,6 +41,16 @@ int _gettoken(char *s, char **p1, char **p2) {
 		return t;
 	}
 
+	if (*s == '"') {
+		*p1 = ++s;
+		while(*s && *s != '"') {
+			s++;
+		}
+		*s++ = 0;
+		*p2 = s;
+		return 'w';
+	}
+
 	*p1 = s;
 	while (*s && !strchr(WHITESPACE SYMBOLS, *s)) {
 		s++;
@@ -101,6 +111,12 @@ int parsecmd(char **argv, int *rightpipe) {
 			}
 			// Open 't' for writing, dup it onto fd 1, and then close the original fd.
 			/* Exercise 6.5: Your code here. (2/3) */
+			if((fd = open(t,O_WRONLY)) < 0) {
+				if((r = create(t, FTYPE_REG)) < 0) {
+					debugf("open and create failed in >");
+					exit();
+				}
+			}
 			fd = open(t,O_WRONLY);
 			dup(fd,1);
 			close(fd);
@@ -198,7 +214,7 @@ void runcmd(char *s) {
 	exit();
 }
 
-void readline(char *buf, u_int n) {
+/*void readline(char *buf, u_int n) {
 	int r;
 	for (int i = 0; i < n; i++) {
 		if ((r = read(0, buf + i, 1)) != 1) {
@@ -221,6 +237,129 @@ void readline(char *buf, u_int n) {
 			buf[i] = 0;
 			return;
 		}
+	}
+	debugf("line too long\n");
+	while ((r = read(0, buf, 1)) == 1 && buf[0] != '\r' && buf[0] != '\n') {
+		;
+	}
+	buf[0] = 0;
+}*/
+
+char draft[1024];
+char after[1024];
+
+int checkDirKey(){
+	char temp1;
+	char temp2;
+	int r;
+	if ((r = read(0, &temp1, 1)) != 1) {
+		if (r < 0) {
+			debugf("read error: %d\n", r);
+		}
+		exit();
+	}
+	if ((r = read(0, &temp2, 1)) != 1) {
+		if (r < 0) {
+			debugf("read error: %d\n", r);
+		}
+		exit();
+	}
+	if(temp1 == '[') {
+		if(temp2 == 'A') return 1;
+		if(temp2 == 'B') return 2;
+		if(temp2 == 'D') return 3;
+		if(temp2 == 'C') return 4;
+	}
+	return 0;
+}
+
+void readline(char *buf, u_int n) {
+	int r;
+	int pos=0;		//当前光标位置的指针
+	char c;
+	int draftLen = 0;
+	while (pos < n) {
+		if ((r = read(0, &c, 1)) != 1) {
+			if (r < 0) {
+				debugf("read error: %d\n", r);
+			}
+			exit();
+		}
+		if(c == '\b' || c == 0x7f) {
+			if(pos != 0) {
+				if(pos == draftLen) {
+					draft[--draftLen] = 0;
+					pos--;
+					printf("\x1b[1K");
+					for(int i = 0; i < pos + 3; i++) {
+						printf("\b");
+					}
+					printf("$ %s", draft);
+				} else {
+					strcpy(after, draft + pos);
+					draft[--pos] = 0;
+					draftLen--;
+					strcpy(draft + pos, after);
+					printf("\x1b[2K");
+					for(int i = 0; i < pos + 3; i++) {
+						printf("\b");
+					}
+					printf("$ %s", draft);
+					for(int i = 0; i < draftLen - pos; i++) {
+						printf("\b");
+					}
+					draft[draftLen] = 0;
+					memset(after,0,1024);
+				}
+			}
+		} else if(c == 27) {
+			switch (checkDirKey()) {
+				case 3:
+					if(pos > 0) {
+						pos--;
+					} else {
+						printf("\x1b[1C");		//超出左移范围输出光标右移
+					}
+					break;
+				case 4:
+					if(pos < draftLen) {
+						pos++;
+					} else {
+						printf("\x1b[1D");
+					}
+					break;
+				default:
+					break;
+			}
+		} else if(c == '\r' || c == '\n') {
+			strcpy(buf, draft);
+			memset(draft,0,1024);
+			memset(after,0,1024);
+			return ;
+		} else {
+			if(pos == draftLen) {
+				draft[draftLen] = c;
+				draft[++draftLen] = 0;
+				pos++;
+			} else {
+				strcpy(after, draft + pos);
+				draft[pos] = c;
+				draft[pos + 1] = 0;
+				printf("\x1b[K");	//清除掉当前光标到末尾
+				pos++;
+				strcpy(draft + pos, after);
+				printf("%s",after);
+				draft[++draftLen] = 0;
+				for(int i = 0; i < strlen(after); i++) {
+					printf("\b");
+				}
+				memset(after,0,1024);
+			}
+		}
+		if(draftLen > n) {
+			break;
+		}
+
 	}
 	debugf("line too long\n");
 	while ((r = read(0, buf, 1)) == 1 && buf[0] != '\r' && buf[0] != '\n') {

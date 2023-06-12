@@ -135,3 +135,14 @@ int fsipc_remove(const char *path) {
 int fsipc_sync(void) {
 	return fsipc(FSREQ_SYNC, fsipcbuf, 0, 0);
 }
+
+int fsipc_create(const char *path, int fileType) {
+	struct Fsreq_create *req;
+	req = (struct Fsreq_create *)fsipcbuf;
+	if (strlen(path) >= MAXPATHLEN) {
+		return -E_BAD_PATH;
+	}
+	strcpy(req->req_path, path);
+	req->fileType = fileType;
+	return fsipc(FSREQ_CREATE, req, 0, 0);
+}
