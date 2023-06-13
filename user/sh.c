@@ -190,9 +190,22 @@ int parsecmd(char **argv, int *rightpipe) {
 	return argc;
 }
 
+void savecmd(char *cmd) {
+	int r;
+	r = open(".history", O_WRONLY | O_APPEND);
+	if(r < 0) {
+		r = create(".history", FTYPE_REG);
+		if(r < 0) {
+			user_panic("create .history failed!");
+		}
+	}
+	write(r, cmd, strlen(cmd));
+	write(r, "\n", 1);
+}
+
 void runcmd(char *s) {
 	gettoken(s, 0);
-
+	savecmd(s);
 	char *argv[MAXARGS];
 	int rightpipe = 0;
 	int argc = parsecmd(argv, &rightpipe);

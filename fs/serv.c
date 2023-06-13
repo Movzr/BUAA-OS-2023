@@ -113,6 +113,10 @@ void serve_open(u_int envid, struct Fsreq_open *rq) {
 	ff->f_fd.fd_omode = o->o_mode;
 	ff->f_fd.fd_dev_id = devfile.dev_id;
 
+	if((rq->req_omode & O_APPEND) == O_APPEND) {
+		ff->f_fd.fd_offset = ff->f_file.f_size;
+	}
+
 	ipc_send(envid, 0, o->o_ff, PTE_D | PTE_LIBRARY);
 }
 

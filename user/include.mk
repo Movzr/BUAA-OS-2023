@@ -44,6 +44,7 @@ ifeq ($(call lab-ge,6), true)
 			touch.b \
 			mkdir.b \
 			tree.b \
+			history.b \
 			init.b
 endif
 
