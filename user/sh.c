@@ -190,6 +190,38 @@ int parsecmd(char **argv, int *rightpipe) {
 	return argc;
 }
 
+static int cmdCnt;
+static int cmdOffset[256];
+void getHistoryCommand(int target, char *result) {
+	int r, fd, len;
+	char temp[4096];
+	r = open(".history", O_RDONLY);
+	if(r < 0) {
+		printf("open history failed or have no history command\n");
+		exit();
+	}
+	fd = r;
+	if(target == 0) {
+		r = read(fd, result, cmdOffset[target]);
+		if(r < 0) {
+			printf("read history failed!\n");
+			exit();
+		}
+		result[cmdOffset[target] - 1] = 0;
+	} else {
+		if((r = read(fd, temp, cmdOffset[target - 1])) != cmdOffset[target - 1]) {
+			printf("read history failed!\n");
+			exit();
+		}
+		len = cmdOffset[target] - cmdOffset[target - 1];
+		if((r = read(fd, result, len)) != len) {
+			printf("read history failed!\n");
+			exit();
+		}
+		result[len - 1] = 0;
+	}
+}
+
 void savecmd(char *cmd) {
 	int r;
 	r = open(".history", O_WRONLY | O_APPEND);
@@ -198,14 +230,21 @@ void savecmd(char *cmd) {
 		if(r < 0) {
 			user_panic("create .history failed!");
 		}
+		r = open(".history", O_WRONLY | O_APPEND);
 	}
 	write(r, cmd, strlen(cmd));
 	write(r, "\n", 1);
+	if(cmdCnt == 0) {
+		cmdOffset[cmdCnt++] = strlen(cmd) + 1; //with \n
+	} else {
+		cmdOffset[cmdCnt] = cmdOffset[cmdCnt-1] + strlen(cmd) + 1;
+		cmdCnt++;
+	}
+	close(r);
 }
 
 void runcmd(char *s) {
 	gettoken(s, 0);
-	savecmd(s);
 	char *argv[MAXARGS];
 	int rightpipe = 0;
 	int argc = parsecmd(argv, &rightpipe);
@@ -227,38 +266,6 @@ void runcmd(char *s) {
 	exit();
 }
 
-/*void readline(char *buf, u_int n) {
-	int r;
-	for (int i = 0; i < n; i++) {
-		if ((r = read(0, buf + i, 1)) != 1) {
-			if (r < 0) {
-				debugf("read error: %d\n", r);
-			}
-			exit();
-		}
-		if (buf[i] == '\b' || buf[i] == 0x7f) {
-			if (i > 0) {
-				i -= 2;
-			} else {
-				i = -1;
-			}
-			if (buf[i] != '\b') {
-				printf("\b");
-			}
-		}
-		if (buf[i] == '\r' || buf[i] == '\n') {
-			buf[i] = 0;
-			return;
-		}
-	}
-	debugf("line too long\n");
-	while ((r = read(0, buf, 1)) == 1 && buf[0] != '\r' && buf[0] != '\n') {
-		;
-	}
-	buf[0] = 0;
-}*/
-
-char draft[1024];
 char after[1024];
 
 int checkDirKey(){
@@ -286,11 +293,13 @@ int checkDirKey(){
 	return 0;
 }
 
+char currentCmd[1024];
 void readline(char *buf, u_int n) {
 	int r;
 	int pos=0;		//当前光标位置的指针
 	char c;
 	int draftLen = 0;
+	int rowNow = cmdCnt;
 	while (pos < n) {
 		if ((r = read(0, &c, 1)) != 1) {
 			if (r < 0) {
@@ -301,32 +310,77 @@ void readline(char *buf, u_int n) {
 		if(c == '\b' || c == 0x7f) {
 			if(pos != 0) {
 				if(pos == draftLen) {
-					draft[--draftLen] = 0;
+					buf[--draftLen] = 0;
 					pos--;
-					printf("\x1b[1K");
-					for(int i = 0; i < pos + 3; i++) {
-						printf("\b");
-					}
-					printf("$ %s", draft);
+					printf("\b \b");
 				} else {
-					strcpy(after, draft + pos);
-					draft[--pos] = 0;
-					draftLen--;
-					strcpy(draft + pos, after);
-					printf("\x1b[2K");
-					for(int i = 0; i < pos + 3; i++) {
+					strcpy(after, buf + pos);
+					pos--;
+					strcpy(buf + pos, after);
+					buf[--draftLen] = 0;
+					printf("\b");
+					printf("\x1b[K");
+					printf("%s", after);
+					for(int i = 0; i < strlen(after); i++) {
 						printf("\b");
 					}
-					printf("$ %s", draft);
-					for(int i = 0; i < draftLen - pos; i++) {
-						printf("\b");
-					}
-					draft[draftLen] = 0;
 					memset(after,0,1024);
 				}
 			}
 		} else if(c == 27) {
 			switch (checkDirKey()) {
+				case 1:
+					printf("\x1b[1B");
+					if(cmdCnt == 0) {
+						break;
+					} else {
+						for(int i = 0; i < pos; i++) {
+							printf("\b");
+						}
+						printf("\x1b[K");
+						pos = 0;
+						if(rowNow == cmdCnt) {
+							strcpy(currentCmd, buf);
+						}
+						if(rowNow > 0) {
+							rowNow--;
+						}
+						getHistoryCommand(rowNow, buf);
+						printf("%s",buf);
+						pos = strlen(buf);
+						draftLen = strlen(buf);
+						break;
+					}
+				case 2:
+					if(rowNow == cmdCnt) {
+						break;
+					} else if(rowNow == cmdCnt - 1) {
+						for(int i = 0; i < pos; i++) {
+							printf("\b");
+						}
+						printf("\x1b[K");
+						rowNow++;
+						strcpy(buf, currentCmd);
+						if(draftLen == 0) {
+							printf(" \b");
+						} else {
+							printf("%s",buf);
+							pos = strlen(buf);
+							draftLen = strlen(buf);
+						}
+						break;
+					} else {
+						for(int i = 0; i < pos; i++) {
+							printf("\b");
+						}
+						printf("\x1b[K");
+						rowNow++;
+						getHistoryCommand(rowNow, buf);
+						printf("%s",buf);
+						pos = strlen(buf);
+						draftLen = strlen(buf);
+						break;
+					}
 				case 3:
 					if(pos > 0) {
 						pos--;
@@ -345,24 +399,21 @@ void readline(char *buf, u_int n) {
 					break;
 			}
 		} else if(c == '\r' || c == '\n') {
-			strcpy(buf, draft);
-			memset(draft,0,1024);
 			memset(after,0,1024);
 			return ;
 		} else {
 			if(pos == draftLen) {
-				draft[draftLen] = c;
-				draft[++draftLen] = 0;
+				buf[draftLen] = c;
+				buf[++draftLen] = 0;
 				pos++;
 			} else {
-				strcpy(after, draft + pos);
-				draft[pos] = c;
-				draft[pos + 1] = 0;
+				strcpy(after, buf + pos);
+				buf[pos] = c;
 				printf("\x1b[K");	//清除掉当前光标到末尾
 				pos++;
-				strcpy(draft + pos, after);
+				strcpy(buf + pos, after);
+				buf[++draftLen] = 0;
 				printf("%s",after);
-				draft[++draftLen] = 0;
 				for(int i = 0; i < strlen(after); i++) {
 					printf("\b");
 				}
@@ -424,7 +475,7 @@ int main(int argc, char **argv) {
 			printf("\n$ ");
 		}
 		readline(buf, sizeof buf);
-
+		savecmd(buf);
 		if (buf[0] == '#') {
 			continue;
 		}
