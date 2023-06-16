@@ -6,7 +6,7 @@ int main(int argc, char **argv) {
         printf("wrong history order! \n");
         exit();
     }
-    fd = open(".history", O_RDONLY);
+    fd = open("/.history", O_RDONLY);
     if(fd < 0) {
         printf("error in opening history or there is no previous command \n");
         exit();

@@ -68,6 +68,9 @@ int syscall_ipc_recv(void *dstva);
 int syscall_cgetc();
 int syscall_write_dev(void *, u_int, u_int);
 int syscall_read_dev(void *, u_int, u_int);
+void syscall_get_cur_path(char *);
+int syscall_set_cur_path(u_int, char *);
+
 
 // ipc.c
 void ipc_send(u_int whom, u_int val, const void *srcva, u_int perm);
@@ -119,7 +122,12 @@ int read_map(int fd, u_int offset, void **blk);
 int remove(const char *path);
 int ftruncate(int fd, u_int size);
 int sync(void);
-int create(const char *path, int fileType);
+int create(char *path, int fileType);
+
+// path.c
+int chdir(u_int envid, char *buf);
+void getcwd(char *buf);
+void link_paths(char *prePath, char *posPath);
 
 #define user_assert(x)                                                                             \
 	do {                                                                                       \

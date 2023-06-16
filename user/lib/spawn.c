@@ -107,8 +107,13 @@ int spawn(char *prog, char **argv) {
 	int fd;
 	if ((fd = open(prog, O_RDONLY)) < 0) {
 		char temp[128];
-		strcpy(temp,prog);
-		int length = strlen(prog);
+		if(prog[0] != '/') {
+			temp[0] = '/';
+			strcpy(temp + 1, prog);
+		} else {
+			strcpy(temp, prog);
+		}
+		int length = strlen(temp);
 		temp[length] = '.';
 		temp[length+1] = 'b';
 		temp[length+2] = 0;

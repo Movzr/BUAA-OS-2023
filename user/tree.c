@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
         exit();
     } else {
         if(argc == 1) {
-            tree("/");
+            tree("./");
         } else {
             tree(argv[1]);
         }

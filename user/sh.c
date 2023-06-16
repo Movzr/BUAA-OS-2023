@@ -4,6 +4,8 @@
 #define WHITESPACE " \t\r\n"
 #define SYMBOLS "<|>&;()"
 
+u_int shellEnvid;
+
 /* Overview:
  *   Parse the next token from the string at s.
  *
@@ -195,7 +197,7 @@ static int cmdOffset[256];
 void getHistoryCommand(int target, char *result) {
 	int r, fd, len;
 	char temp[4096];
-	r = open(".history", O_RDONLY);
+	r = open("/.history", O_RDONLY);
 	if(r < 0) {
 		printf("open history failed or have no history command\n");
 		exit();
@@ -225,13 +227,13 @@ void getHistoryCommand(int target, char *result) {
 
 void savecmd(char *cmd) {
 	int r;
-	r = open(".history", O_WRONLY | O_APPEND);
+	r = open("/.history", O_WRONLY | O_APPEND);
 	if(r < 0) {
-		r = create(".history", FTYPE_REG);
+		r = create("/.history", FTYPE_REG);
 		if(r < 0) {
 			user_panic("create .history failed!");
 		}
-		r = open(".history", O_WRONLY | O_APPEND);
+		r = open("/.history", O_WRONLY | O_APPEND);
 	}
 	write(r, cmd, strlen(cmd));
 	write(r, "\n", 1);
@@ -253,6 +255,28 @@ void runcmd(char *s) {
 		return;
 	}
 	argv[argc] = 0;
+	if(strcmp(argv[0], "cd") == 0) {
+		int r;
+		if(argc != 2) {
+			printf("wrong cd order\n");
+			exit();
+		}
+		if(argv[1][0] == '/') {
+			if((r = chdir(shellEnvid, argv[1])) < 0) {
+				printf("cd failed");
+				exit();
+			}
+		} else {
+			char temp[128];
+			getcwd(temp);
+			link_paths(temp, argv[1]);
+			if((r = chdir(shellEnvid, temp)) < 0) {
+				printf("cd failed");
+				exit();
+			}
+		}
+		return ;
+	}
 
 	int child = spawn(argv[0], argv);
 	close_all();
@@ -444,6 +468,7 @@ int main(int argc, char **argv) {
 	int r;
 	int interactive = iscons(0);
 	int echocmds = 0;
+	shellEnvid = syscall_getenvid();
 	debugf("\n:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n");
 	debugf("::                                                         ::\n");
 	debugf("::                     MOS Shell 2023                      ::\n");

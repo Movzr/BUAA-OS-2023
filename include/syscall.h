@@ -22,6 +22,8 @@ enum {
 	SYS_cgetc,
 	SYS_write_dev,
 	SYS_read_dev,
+	SYS_get_cur_path,
+	SYS_set_cur_path,
 	MAX_SYSNO,
 };
 
