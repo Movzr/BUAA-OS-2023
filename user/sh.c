@@ -220,6 +220,7 @@ void getHistoryCommand(int target, char *result) {
 		}
 		result[len - 1] = 0;
 	}
+	close(fd);
 }
 
 void savecmd(char *cmd) {
