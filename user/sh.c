@@ -246,6 +246,18 @@ void savecmd(char *cmd) {
 	close(r);
 }
 
+void cdFather(char *path) {
+	int len = strlen(path);
+	if(len <= 1) {
+		return;
+	} 
+	if(path[len-1] == '/') len--;
+	while(len > 1 && path[len - 1] != '/') {
+		len--;
+	}
+	path[len] = 0;
+}
+
 void runcmd(char *s) {
 	gettoken(s, 0);
 	char *argv[MAXARGS];
@@ -263,6 +275,14 @@ void runcmd(char *s) {
 		}
 		if(argv[1][0] == '/') {
 			if((r = chdir(shellEnvid, argv[1])) < 0) {
+				printf("cd failed");
+				exit();
+			}
+		} else if((argv[1][0] == '.')&&(argv[1][1] == '.')) {
+			char temp[128];
+			getcwd(temp);
+			cdFather(temp);
+			if((r = chdir(shellEnvid, temp)) < 0) {
 				printf("cd failed");
 				exit();
 			}
