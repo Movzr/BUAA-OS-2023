@@ -13,6 +13,7 @@ var:
 .text
 /* declare a symbol '_start_mips' via the macro 'EXPORT' in 'include/asm/asm.h'. We define '_start_mips' here as the entry of our program. */
 /* Your code here. (2/6) */
+/* By Movzr */
 EXPORT( _start_mips)
 	mtc0    zero, CP0_STATUS
 	li      sp, 0x84000000
